@@ -15,3 +15,8 @@ node_modules/
 *.mcpb
 .DS_Store
 Thumbs.db
+
+# Server-data (tokens) en logs
+data/
+logs/
+ngrok.yml

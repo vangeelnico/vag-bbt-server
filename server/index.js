@@ -8,7 +8,7 @@ const os = require("os");
 const path = require("path");
 
 const SERVER_NAME = "bbt-dms";
-const SERVER_VERSION = "0.2.2";
+const SERVER_VERSION = "0.3.0";
 const TEST_API_KEY = "481384f3ba7c0a75b3340b473d5e6ade"; // publieke testsleutel uit de BBT-documentatie
 const BASE_URL = (process.env.BBT_BASE_URL || "https://bbt-cloud.be/service/api/v1").replace(/\/+$/, "");
 const API_KEY = (process.env.BBT_API_KEY || "").trim();
@@ -426,11 +426,13 @@ function toolList() {
 }
 
 // ---------------------------------------------------------------- JSON-RPC over stdio
-function send(msg) { process.stdout.write(JSON.stringify(msg) + "\n"); }
-function reply(id, result) { send({ jsonrpc: "2.0", id, result }); }
-function replyError(id, code, message) { send({ jsonrpc: "2.0", id, error: { code, message } }); }
+// handle() geeft het antwoord terug (of null bij notificaties), zodat zowel stdio
+// (lokaal, Claude Desktop) als HTTP (server/http.js) dezelfde logica gebruiken.
+function reply(id, result) { return { jsonrpc: "2.0", id, result }; }
+function replyError(id, code, message) { return { jsonrpc: "2.0", id, error: { code, message } }; }
 
 async function handle(msg) {
+  if (!msg || typeof msg !== "object") return { jsonrpc: "2.0", id: null, error: { code: -32600, message: "Invalid Request" } };
   const { id, method, params } = msg;
   const isRequest = id !== undefined && id !== null;
   try {
@@ -441,10 +443,10 @@ async function handle(msg) {
           protocolVersion: pv,
           capabilities: { tools: { listChanged: false } },
           serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
-          instructions: "Leest gegevens uit BBT (DMS van VAG N.V.). Alle tools zijn alleen-lezen. Datums in JJJJ-MM-DD. Vraag grote periodes op in stukken (per maand) en gebruik 'fields', 'zoek' of save_to_file om antwoorden klein te houden.",
+          instructions: "Leest gegevens uit BBT (DMS van VAG N.V.). Alle tools zijn alleen-lezen, behalve bbt_stockwagen_aanmaken (enkel na bevestiging). Datums in JJJJ-MM-DD. Vraag grote periodes op in stukken (per maand) en gebruik 'fields', 'zoek' of save_to_file om antwoorden klein te houden.",
         });
       }
-      case "ping": return isRequest && reply(id, {});
+      case "ping": return isRequest ? reply(id, {}) : null;
       case "tools/list": return reply(id, { tools: toolList() });
       case "tools/call": {
         const name = params && params.name;
@@ -461,27 +463,35 @@ async function handle(msg) {
       case "resources/list": return reply(id, { resources: [] });
       case "prompts/list": return reply(id, { prompts: [] });
       default:
-        if (method && method.startsWith("notifications/")) return; // geen antwoord op notificaties
+        if (method && method.startsWith("notifications/")) return null; // geen antwoord op notificaties
         if (isRequest) return replyError(id, -32601, `Methode niet ondersteund: ${method}`);
+        return null;
     }
   } catch (e) {
-    if (isRequest) replyError(id, -32603, e && e.message ? e.message : String(e));
+    if (isRequest) return replyError(id, -32603, e && e.message ? e.message : String(e));
+    return null;
   }
 }
 
-let buffer = "";
-process.stdin.setEncoding("utf8");
-process.stdin.on("data", (chunk) => {
-  buffer += chunk;
-  let idx;
-  while ((idx = buffer.indexOf("\n")) >= 0) {
-    const line = buffer.slice(0, idx).trim();
-    buffer = buffer.slice(idx + 1);
-    if (!line) continue;
-    let msg;
-    try { msg = JSON.parse(line); } catch (_) { send({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }); continue; }
-    if (Array.isArray(msg)) msg.forEach((m) => handle(m)); else handle(msg);
-  }
-});
-process.stdin.on("end", () => process.exit(0));
-log(`gestart (v${SERVER_VERSION}), API-key ${API_KEY ? "ingesteld" : "ONTBREEKT"}`);
+module.exports = { handle, SERVER_NAME, SERVER_VERSION, API_KEY, EXPORT_DIR, log };
+
+// ---------------------------------------------------------------- stdio (lokaal)
+if (require.main === module) {
+  const send = (m) => { if (m) process.stdout.write(JSON.stringify(m) + "\n"); };
+  let buffer = "";
+  process.stdin.setEncoding("utf8");
+  process.stdin.on("data", (chunk) => {
+    buffer += chunk;
+    let idx;
+    while ((idx = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, idx).trim();
+      buffer = buffer.slice(idx + 1);
+      if (!line) continue;
+      let msg;
+      try { msg = JSON.parse(line); } catch (_) { send({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }); continue; }
+      if (Array.isArray(msg)) msg.forEach((m) => handle(m).then(send)); else handle(msg).then(send);
+    }
+  });
+  process.stdin.on("end", () => process.exit(0));
+  log(`gestart via stdio (v${SERVER_VERSION}), API-key ${API_KEY ? "ingesteld" : "ONTBREEKT"}`);
+}
