@@ -1,0 +1,137 @@
+{
+  "manifest_version": "0.2",
+  "name": "bbt-dms",
+  "display_name": "BBT DMS",
+  "version": "0.2.2",
+  "description": "Leest gegevens uit BBT (planning, facturen, orders, klanten, stock …) en maakt stockwagens aan na jouw bevestiging.",
+  "long_description": "Lokale koppeling tussen Claude en de BBT-API voor VAG N.V. Alle tools lezen enkel, behalve het aanmaken van stockwagens: dat gebeurt in twee stappen (eerst controle met voorbeeld en bevestigingscode, dan pas aanmaken) en wordt gelogd. Bestaande wagens worden nooit gewijzigd. Exports en log in Documenten › Claude Local › BBT_server › export.",
+  "author": {
+    "name": "VAG N.V."
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "BBT_API_KEY": "${user_config.api_key}",
+        "BBT_EXPORT_DIR": "${user_config.export_dir}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "bbt_config",
+      "description": "Codes voor brandstof, transmissie, ordercategorieën"
+    },
+    {
+      "name": "bbt_planning",
+      "description": "Planning / afspraken"
+    },
+    {
+      "name": "bbt_planning_vrije_slots",
+      "description": "Vrije planningsslots per maand"
+    },
+    {
+      "name": "bbt_facturen",
+      "description": "Facturen per periode"
+    },
+    {
+      "name": "bbt_factuur_pdf",
+      "description": "PDF van een factuur opslaan"
+    },
+    {
+      "name": "bbt_orders",
+      "description": "Werkorders, bestekken, offertes, bestelbonnen, ..."
+    },
+    {
+      "name": "bbt_bestelbonnen_stock",
+      "description": "Bestelbonnen van stockwagens"
+    },
+    {
+      "name": "bbt_stockwagens",
+      "description": "Stockwagens"
+    },
+    {
+      "name": "bbt_klantwagens",
+      "description": "Klantwagens"
+    },
+    {
+      "name": "bbt_zoeken",
+      "description": "Zoeken op wagen of klant"
+    },
+    {
+      "name": "bbt_klanten",
+      "description": "Klantenlijst"
+    },
+    {
+      "name": "bbt_klant",
+      "description": "Eén klant"
+    },
+    {
+      "name": "bbt_klant_contacten",
+      "description": "Contactpersonen"
+    },
+    {
+      "name": "bbt_leveranciers",
+      "description": "Leveranciers"
+    },
+    {
+      "name": "bbt_artikels",
+      "description": "Artikels"
+    },
+    {
+      "name": "bbt_artikel",
+      "description": "Eén artikel"
+    },
+    {
+      "name": "bbt_stockaantal",
+      "description": "Stockaantal van een artikel"
+    },
+    {
+      "name": "bbt_uurregistratie",
+      "description": "Uurregistratie"
+    },
+    {
+      "name": "bbt_garanties",
+      "description": "Garanties"
+    },
+    {
+      "name": "bbt_stockwagen_controleren",
+      "description": "Nieuwe stockwagen controleren en voorstel tonen (wijzigt niets)"
+    },
+    {
+      "name": "bbt_stockwagen_aanmaken",
+      "description": "Gecontroleerde stockwagen aanmaken in BBT (na bevestiging)"
+    }
+  ],
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "BBT API-key",
+      "description": "Te vinden in BBT via Instellingen > Algemeen > Bedrijf > API-key.",
+      "sensitive": true,
+      "required": true
+    },
+    "export_dir": {
+      "type": "directory",
+      "title": "Exportmap",
+      "description": "Map waar grote resultaten (JSON/CSV) en factuur-PDF's worden bewaard.",
+      "default": "${DOCUMENTS}/Claude Local/BBT_server/export",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "license": "UNLICENSED"
+}

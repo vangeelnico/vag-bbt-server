@@ -1,0 +1,17 @@
+# Geheimen: nooit naar GitHub
+.env
+*.env
+!.env.example
+
+# Data en exports (klant- en factuurgegevens)
+export/
+Exports/
+*.csv
+*.jsonl
+*.pdf
+
+# Build / systeem
+node_modules/
+*.mcpb
+.DS_Store
+Thumbs.db
