@@ -62,6 +62,31 @@ Claude > Instellingen > Connectors > **Aangepaste connector toevoegen**
 Claude opent een loginpagina: geef je wachtwoord in. Klaar.
 
 ## Bijwerken
+
+### Automatisch (aanbevolen)
+Elke 15 minuten kijkt de pc of er een nieuwe versie op de branch `main` staat. Zo ja:
+code ophalen, syntax controleren, server herstarten en testen. Start de nieuwe versie
+niet, dan wordt automatisch de vorige versie teruggezet. Logboek: `C:\vag-bbt\logs\update.log`.
+
+**Werkwijze:** nieuwe wijzigingen komen eerst op een aparte branch. Pas na "ok" van Nico
+worden ze in `main` samengevoegd en gaan ze live.
+
+Eenmalig installeren:
+1. GitHub > Settings > Developer settings > Personal access tokens > **Fine-grained tokens** > Generate new token
+   - Repository access: **Only select repositories** > `vag-bbt-server`
+   - Permissions > Repository permissions > **Contents: Read-only** (verder niets)
+   - Kopieer de token.
+2. Op de pc (als administrator):
+   ```powershell
+   cd C:\vag-bbt\vag-bbt-server
+   git pull
+   powershell -ExecutionPolicy Bypass -File .\windows\install-auto-update.ps1
+   ```
+   Plak de token als erom gevraagd wordt.
+
+Verloopt de token: verwijder `C:\vag-bbt\github-token.txt` en voer het installatiescript opnieuw uit.
+
+### Manueel
 Na een wijziging op GitHub, op de Windows-pc (als administrator):
 ```powershell
 cd C:\vag-bbt\vag-bbt-server
