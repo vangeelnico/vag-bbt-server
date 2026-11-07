@@ -257,10 +257,12 @@ function checkBearer(req) {
 
 async function handleMcp(req, res) {
   if (!checkBearer(req)) {
+    log(`mcp ${req.method} geweigerd (geen/ongeldige token) - ${req.headers["user-agent"] || "?"}`);
     return send(res, 401, { error: "invalid_token", error_description: "Inloggen vereist" }, {
       "WWW-Authenticate": `Bearer resource_metadata="${PUBLIC_URL}/.well-known/oauth-protected-resource"`,
     });
   }
+  if (req.method !== "POST") log(`mcp ${req.method} (accept: ${req.headers.accept || "-"})`);
   if (req.method === "GET") return send(res, 405, "Geen SSE-stream; gebruik POST", { Allow: "POST" });
   if (req.method === "DELETE") return send(res, 200, "");
   if (req.method !== "POST") return send(res, 405, "Method not allowed", { Allow: "POST" });
@@ -270,6 +272,7 @@ async function handleMcp(req, res) {
   catch (_) { return send(res, 400, { jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }); }
 
   const batch = Array.isArray(msg);
+  log(`mcp ${(batch ? msg : [msg]).map((m) => (m && m.method) || "?").join(",")}`);
   const results = (await Promise.all((batch ? msg : [msg]).map((m) => handle(m)))).filter(Boolean);
   if (!results.length) return send(res, 202, "");
   send(res, 200, batch ? results : results[0]);
@@ -280,10 +283,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, PUBLIC_URL);
   const p = url.pathname.replace(/\/+$/, "") || "/";
   try {
-    // DNS-rebinding: browserverzoeken van vreemde sites weigeren
-    const origin = req.headers.origin;
-    if (origin && p === "/mcp" && !/^https:\/\/(claude\.ai|claude\.com)$/.test(origin) && origin !== PUBLIC_URL) return send(res, 403, "Origin niet toegelaten");
-
+    // (Geen Origin-controle: elke /mcp-aanvraag vereist al een geldige login-token.)
     if (p === "/") return send(res, 200, `${SERVER_NAME} v${SERVER_VERSION} draait.`);
     if (p.startsWith("/.well-known/oauth-protected-resource")) return send(res, 200, protectedResourceMeta());
     if (p.startsWith("/.well-known/oauth-authorization-server") || p.startsWith("/.well-known/openid-configuration")) return send(res, 200, authServerMeta());
@@ -293,7 +293,7 @@ const server = http.createServer(async (req, res) => {
     if (p === "/mcp") return await handleMcp(req, res);
     send(res, 404, "Niet gevonden");
   } catch (e) {
-    log("http-fout", p, e && e.message);
+    log("http-fout", req.method, p, e && e.stack ? e.stack : e);
     if (!res.headersSent) send(res, 500, "Interne fout");
   }
 });
