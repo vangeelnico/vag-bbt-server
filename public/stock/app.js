@@ -37,6 +37,7 @@
   ];
   const PRIJS = [["< € 30.000", 0, 30000], ["€ 30–40.000", 30000, 40000], ["€ 40–50.000", 40000, 50000], ["€ 50–75.000", 50000, 75000], ["> € 75.000", 75000, Infinity], ["Op aanvraag", -1, -1]];
   const KM = [["< 10.000 km", 0, 10000], ["10–25.000 km", 10000, 25000], ["25–50.000 km", 25000, 50000], ["> 50.000 km", 50000, Infinity]];
+  const schadeLijst = (i) => (Array.isArray(i && i.schade) ? i.schade : []); // enkel status 77/184/99 (server)
   const band = (list, v) => { for (const [l, a, b] of list) if (a === -1 ? v == null : v != null && v >= a && v < b) return l; return ""; };
 
   // ---------------------------------------------------------------- API
@@ -55,6 +56,8 @@
     const btn = $("#btn-refresh"); btn.classList.add("spin");
     try {
       const d = await api("cars" + (refresh ? "?refresh=1" : ""));
+      if (S.appVersie && d.app && d.app !== S.appVersie) { location.reload(); return; } // nieuwe versie op de server
+      S.appVersie = d.app;
       S.cars = d.wagens.map((c) => ({ ...c, prijsband: band(PRIJS, c.prijs), kmband: band(KM, c.km), _txt: norm([c.referentie, c.merk, c.model, c.uitvoering, ...c.opties].join(" | ")) }));
       S.byId = new Map(S.cars.map((c) => [c.id, c]));
       S.bijgewerkt = d.bijgewerkt;
@@ -94,7 +97,10 @@
   }
   function armIdle() { clearTimeout(idleTimer); if (S.dealer) idleTimer = setTimeout(() => { setDealer(false); toast("Terug in klantmodus"); }, IDLE_MS); }
   ["pointerdown", "keydown"].forEach((ev) => document.addEventListener(ev, () => S.dealer && armIdle(), { passive: true }));
-  document.addEventListener("visibilitychange", () => { if (document.hidden && S.dealer) setDealer(false); }); // app naar achtergrond → klantmodus
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { if (S.dealer) setDealer(false); return; } // app naar achtergrond → klantmodus
+    if (S.cars.length) load(); // terug op voorgrond: data (uit servercache) + versiecontrole
+  });
 
   // ---------------------------------------------------------------- filteren
   function terms() { const out = []; S.q.replace(/"([^"]+)"|(\S+)/g, (_, a, b) => out.push(norm(a || b))); return out.filter(Boolean); }
@@ -137,7 +143,7 @@
     if (c.direct_beschikbaar) b += '<span class="badge green">Direct beschikbaar</span>';
     if (c.gereserveerd) b += '<span class="badge res">Gereserveerd</span>';
     const i = S.dealer && S.intern && S.intern[c.id];
-    if (i && inCard) for (const s of i.schade) b += `<span class="badge dmg">${esc(s)}</span>`;
+    if (i && inCard) for (const s of schadeLijst(i)) b += `<span class="badge dmg">${esc(s)}</span>`;
     return b;
   }
   function dealerLine(c) {
@@ -237,7 +243,7 @@
     const rows = [
       ["Locatie", i.locatie], ["Aankoopprijs", eur2(i.aankoopprijs)],
       ["Netto marge", `<span class="${i.marge >= 0 ? "pos" : "neg"}">${esc(eur2(i.marge))}</span>`, true],
-      ["Nieuwprijs", i.nieuwprijs ? eur(i.nieuwprijs) : ""], ["Schade", i.schade.length ? i.schade.join(", ") : "Geen open schade"],
+      ["Nieuwprijs", i.nieuwprijs ? eur(i.nieuwprijs) : ""], ["Schade", schadeLijst(i).length ? schadeLijst(i).join(", ") : "Geen open schade"],
       ["Schadebedrag", i.schadebedrag ? eur2(i.schadebedrag) : ""], ["Leverancier", i.leverancier],
       ["Status", i.statussen.join(", ")], ["Reservatie", i.reservatie], ["VIN", i.vin], ["Nummerplaat", i.nummerplaat], ["Aankoopdatum", i.aankoopdatum],
     ].filter((x) => x[1]);
@@ -376,7 +382,7 @@
         ${row("Interieur", (c) => esc(c.interieur))}
         ${row("Carrosserie", (c) => esc(c.carrosserie))}
         ${row("Opties", (c) => c.opties.length + " opties")}
-        ${intern ? row("Intern", (c) => { const i = S.intern[c.id]; return i ? `${esc(i.locatie)}${i.schade.length ? "<br><b>" + esc(i.schade.join(", ")) + "</b>" : ""}${i.reservatie ? "<br>Res.: " + esc(i.reservatie) : ""}` : ""; }, "intern-row") : ""}
+        ${intern ? row("Intern", (c) => { const i = S.intern[c.id]; return i ? `${esc(i.locatie)}${schadeLijst(i).length ? "<br><b>" + esc(schadeLijst(i).join(", ")) + "</b>" : ""}${i.reservatie ? "<br>Res.: " + esc(i.reservatie) : ""}` : ""; }, "intern-row") : ""}
         ${cars.length > 1 && diff.length ? `<tr class="sect"><td colspan="${cars.length + 1}">Verschillen in opties (${diff.length})</td></tr>` + diff.map((o) => `<tr><td class="optname">${esc(o)}</td>${cars.map((c) => c.opties.includes(o) ? '<td class="yes">✓</td>' : '<td class="no">–</td>').join("")}</tr>`).join("") : ""}
       </tbody></table></div></div>`;
     if (el.hidden) openOverlay(el);

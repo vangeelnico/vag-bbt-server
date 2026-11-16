@@ -32,6 +32,13 @@ const STATIC = {
   "icon-maskable-512.png": ["icon-maskable-512.png", "image/png"],
 };
 const IMG_HOST = "https://bbt-storage.b-cdn.net";
+// Versie van de app-bestanden: verandert bij elke update. De app herlaadt zichzelf als die verschilt
+// van de versie waarmee ze geladen werd (anders draait een iPad nog oude code tegen een nieuwe server).
+const APP_VERSIE = (() => {
+  const h = crypto.createHash("sha256");
+  for (const f of ["index.html", "app.js", "app.css"]) { try { h.update(fs.readFileSync(path.join(PUBLIC_DIR, f))); } catch (_) {} }
+  return h.digest("hex").slice(0, 12);
+})();
 const CSP = [
   "default-src 'self'", "script-src 'self'", "style-src 'self'", `img-src 'self' data: ${IMG_HOST}`,
   "connect-src 'self'", "manifest-src 'self'", "worker-src 'self'", "frame-ancestors 'none'",
@@ -245,7 +252,7 @@ module.exports = function createStockviewer({ bbtPost, log, DATA_DIR }) {
 
     if (route === "cars" && req.method === "GET") {
       const c = await getCars(force); const loc = locaties();
-      return json(res, 200, { bijgewerkt: new Date(c.at).toISOString(), wagens: c.raw.map((x) => toPublic(x, loc)) });
+      return json(res, 200, { app: APP_VERSIE, bijgewerkt: new Date(c.at).toISOString(), wagens: c.raw.map((x) => toPublic(x, loc)) });
     }
     if (route === "intern" && req.method === "GET") {
       const c = await getCars(force); const loc = locaties();
