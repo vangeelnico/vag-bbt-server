@@ -3,7 +3,9 @@
 //
 // Twee soorten data, elk een eigen endpoint (beide achter dezelfde login):
 //   /stock/api/cars   → KLANTVELDEN (whitelist). Nooit aankoopprijs, marge, schade, locatie, leverancier,
-//                        memo, interne statussen, reservatienaam, referentie of VIN.
+//                        memo, interne statussen, reservatienaam of VIN. (Referentie mag wel: altijd zichtbaar.)
+// Verkochte wagens (bestelbon: BBT-veld "ordered" = 1), gearchiveerde en gefactureerde wagens worden weggelaten.
+// Schade: het BBT-veld damage wordt niet gebruikt; status 77 = schade nog niet hersteld.
 //   /stock/api/intern → interne velden; de app haalt die pas op bij het wisselen naar dealermodus.
 "use strict";
 
@@ -75,6 +77,8 @@ const KLEUREN = [
   ["Rood", /rood|rot\b|red|rouge|hyacint/], ["Groen", /groen|gr(ü|u)n|green|vert/],
   ["Bruin/beige", /bruin|braun|brown|beige|zand|kashmir|cashmere/],
 ];
+const SCHADE_STATUS = "77"; // BBT-status: schade nog niet hersteld
+const statusCodes = (c) => String(c.status || "").split(";").map((s) => s.trim()).filter(Boolean);
 function kleurGroep(c) { const s = c.toLowerCase(); for (const [n, re] of KLEUREN) if (re.test(s)) return n; return c ? "Andere" : ""; }
 function modelGroep(model) {
   const m = str(model);
@@ -131,7 +135,7 @@ module.exports = function createStockviewer({ bbtPost, log, DATA_DIR }) {
     const age = cache ? Date.now() - cache.at : Infinity;
     if (cache && (age < CACHE_MS && !force || force && age < MIN_REFRESH_MS)) return cache;
     if (!inflight) inflight = fetchRaw().then((raw) => {
-      const list = raw.filter((c) => c && typeof c === "object" && !Number(c.archived) && !Number(c.invoiced) && !Number(c.sold_by) && !date(c.date_out));
+      const list = raw.filter((c) => c && typeof c === "object" && !Number(c.archived) && !Number(c.invoiced) && !Number(c.sold_by) && !Number(c.ordered) && !date(c.date_out));
       cache = { at: Date.now(), raw: list, byId: new Map(list.map((c) => [String(c.id), c])) };
       log(`STOCKVIEWER: ${list.length} wagens geladen${FIXTURE ? " (testbestand)" : " uit BBT"}`);
       return cache;
@@ -144,7 +148,7 @@ module.exports = function createStockviewer({ bbtPost, log, DATA_DIR }) {
     const pics = Array.isArray(c.pictures) ? c.pictures : [];
     const prijs = num(c.desired_selling_price);
     return {
-      id: String(c.id),
+      id: String(c.id), referentie: str(c.reference),
       merk: str(c.brand), model: str(c.model), uitvoering: str(c.model_execution).replace(/\s*-\s*$/, ""),
       modelgroep: modelGroep(c.model),
       bouwjaar: str(c.buildyear), inschrijving: date(c.first_subscription),
@@ -166,12 +170,12 @@ module.exports = function createStockviewer({ bbtPost, log, DATA_DIR }) {
   function toIntern(c, loc) {
     const lid = String(c.location ?? "");
     return {
-      referentie: str(c.reference), vin: str(c.chassis_number), nummerplaat: str(c.license_plate),
+      vin: str(c.chassis_number), nummerplaat: str(c.license_plate),
       locatie: loc.namen[lid] || (lid && lid !== "0" ? "Locatie #" + lid : "–"), locatie_id: lid,
       aankoopprijs: num(c.purchase_price), marge: num(c.net_margin), nieuwprijs: num(c.new_price),
-      schade: !!Number(c.damage), schade_details: plain(c.damage_details), schadebedrag: num(c.anticipated_damage_amount),
+      schade: statusCodes(c).includes(SCHADE_STATUS), schade_details: plain(c.damage_details), schadebedrag: num(c.anticipated_damage_amount),
       leverancier: c.supplier ? "#" + c.supplier : "", memo: plain(c.memo), notitie: plain(c.other),
-      status: str(c.status).split(";").filter(Boolean).join(", "), reservatie: plain(c.reservation),
+      status: statusCodes(c).join(", "), reservatie: plain(c.reservation),
       aankoopdatum: date(c.purchase_date),
     };
   }

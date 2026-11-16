@@ -58,15 +58,15 @@ const H = { "X-Stockviewer": "1", "Content-Type": "application/json" };
   const data = JSON.parse(body);
   const pub = new Map(data.wagens.map((w) => [w.id, w]));
 
-  await t("gearchiveerde/gefactureerde wagens weggelaten", async () => {
+  await t("gearchiveerde, gefactureerde en verkochte (bestelbon) wagens weggelaten", async () => {
     for (const c of raw) {
-      const weg = Number(c.archived) || Number(c.invoiced) || Number(c.sold_by);
+      const weg = Number(c.archived) || Number(c.invoiced) || Number(c.sold_by) || Number(c.ordered);
       assert.equal(pub.has(String(c.id)), !weg, `wagen ${c.id}`);
     }
   });
 
   await t("klant-endpoint: geen verboden veldnamen", async () => {
-    const forbidden = /^(purchase|net_margin|marge|aankoop|damage|schade|location|locatie|supplier|leverancier|memo|other|notitie|status|reservation|reservatie|reference|referentie|chassis|vin|license|nummerplaat|account|owner)/i;
+    const forbidden = /^(purchase|net_margin|marge|aankoop|damage|schade|location|locatie|supplier|leverancier|memo|other|notitie|status|reservation|reservatie|chassis|vin|license|nummerplaat|account|owner)/i;
     const allowed = new Set(["direct_beschikbaar", "gereserveerd"]);
     (function walk(o, p) {
       if (Array.isArray(o)) return o.forEach((v, i) => walk(v, p + "[" + i + "]"));
@@ -74,7 +74,7 @@ const H = { "X-Stockviewer": "1", "Content-Type": "application/json" };
     })(data, "");
   });
 
-  await t("klant-endpoint: geen marge, aankoopprijs, schade, locatie, reservatie, notities, referentie of VIN (op waarde)", async () => {
+  await t("klant-endpoint: geen marge, aankoopprijs, schade, locatie, reservatie, notities, of VIN (op waarde); referentie wel aanwezig", async () => {
     const strip = (s) => String(s || "").replace(/<br\s*\/?>/gi, " ").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
     const locNames = Object.values(locCfg.locaties || {});
     let checked = 0;
@@ -90,14 +90,15 @@ const H = { "X-Stockviewer": "1", "Content-Type": "application/json" };
         assert.ok(!txt.includes(String(v)) || String(v).length < 4, `wagen ${c.id}: ${veld} als tekst gevonden`);
         checked++;
       }
-      for (const [veld, v] of [["reference", c.reference], ["chassis_number", c.chassis_number], ["license_plate", c.license_plate], ["memo", strip(c.memo)], ["other", strip(c.other)], ["damage_details", strip(c.damage_details)], ["reservation", strip(c.reservation)]]) {
+      assert.equal(w.referentie, String(c.reference), `wagen ${c.id}: referentie ontbreekt`);
+      for (const [veld, v] of [["chassis_number", c.chassis_number], ["license_plate", c.license_plate], ["memo", strip(c.memo)], ["other", strip(c.other)], ["damage_details", strip(c.damage_details)], ["reservation", strip(c.reservation)]]) {
         const s = String(v || "").trim(); if (s.length < 4) continue;
         assert.ok(!txt.includes(s), `wagen ${c.id}: ${veld} gevonden ("${s.slice(0, 30)}")`);
         // ook stukjes van notities/schadeteksten (bv. "overname 38500")
         if (/memo|other|damage|reservation/.test(veld)) for (const part of s.split(/[\n>]/).map((x) => x.trim()).filter((x) => x.length >= 8)) assert.ok(!txt.includes(part), `wagen ${c.id}: deel van ${veld} gevonden ("${part.slice(0, 30)}")`);
         checked++;
       }
-      for (const f of fotos) for (const u of Object.values(f)) { assert.ok(String(u).startsWith("https://bbt-storage.b-cdn.net/"), "foto van onbekende host"); for (const s of [c.reference]) assert.ok(!String(u).includes(s), "referentie in foto-URL"); }
+      for (const f of fotos) for (const u of Object.values(f)) { assert.ok(String(u).startsWith("https://bbt-storage.b-cdn.net/"), "foto van onbekende host"); }
       for (const name of locNames) assert.ok(!new RegExp("\\b" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(txt), `wagen ${c.id}: locatienaam "${name}" gevonden`);
       assert.equal(typeof w.direct_beschikbaar, "boolean");
       assert.equal(w.direct_beschikbaar, (locCfg.direct_beschikbaar || [1]).map(String).includes(String(c.location)), `wagen ${c.id}: badge direct beschikbaar`);
@@ -112,7 +113,10 @@ const H = { "X-Stockviewer": "1", "Content-Type": "application/json" };
     const c = raw.find((x) => pub.has(String(x.id)));
     const i = d.intern[String(c.id)];
     assert.equal(i.marge, parseFloat(c.net_margin));
-    assert.equal(i.referentie, String(c.reference));
+    const s77 = raw.find((x) => pub.has(String(x.id)) && /;77;/.test(x.status || ""));
+    if (s77) assert.equal(d.intern[String(s77.id)].schade, true, "status 77 moet schade = niet hersteld geven");
+    const zonder = raw.find((x) => pub.has(String(x.id)) && !/;77;/.test(x.status || "") && Number(x.damage));
+    if (zonder) assert.equal(d.intern[String(zonder.id)].schade, false, "veld damage mag niet meer tellen");
     if (locCfg.locaties[String(c.location)]) assert.equal(i.locatie, locCfg.locaties[String(c.location)]);
   });
 
