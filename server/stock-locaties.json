@@ -1,0 +1,18 @@
+{
+  "_uitleg": "BBT location-id -> naam. 'direct_beschikbaar' = id's waarvoor de klant de badge 'Direct beschikbaar' ziet. Eigen versie zetten kan in C:\\vag-bbt\\data\\stock-locaties.json (heeft voorrang).",
+  "direct_beschikbaar": [1],
+  "locaties": {
+    "1": "VAG Turnhout",
+    "4": "Tess Cars",
+    "7": "Amebo",
+    "8": "Hubert",
+    "9": "MB Duitsland",
+    "44": "Carrosserie Dierckx",
+    "46": "VAG Carrosserie",
+    "83": "VAG Garage",
+    "117": "Radius",
+    "141": "Nico",
+    "172": "Danielle",
+    "173": "Nancy Simons"
+  }
+}

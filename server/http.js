@@ -8,7 +8,7 @@ const http = require("http");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
-const { handle, SERVER_NAME, SERVER_VERSION, API_KEY, log } = require("./index.js");
+const { handle, SERVER_NAME, SERVER_VERSION, API_KEY, log, bbtPost } = require("./index.js");
 
 // ---------------------------------------------------------------- instellingen
 const PORT = parseInt(process.env.PORT || "8787", 10);
@@ -29,6 +29,7 @@ if (ADMIN_PASSWORD.length < 12) fatal("ADMIN_PASSWORD moet minstens 12 tekens la
 if (!API_KEY) log("LET OP: BBT_API_KEY ontbreekt – enkel de testomgeving zal werken.");
 
 const RESOURCE = PUBLIC_URL + "/mcp";
+const handleStock = require("./stockviewer.js")({ bbtPost, log, DATA_DIR }); // web-app /stock (zie stockviewer.js)
 
 // ---------------------------------------------------------------- opslag (tokens enkel als hash)
 fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -291,6 +292,7 @@ const server = http.createServer(async (req, res) => {
     if (p === "/authorize") return await handleAuthorize(req, res, url);
     if (p === "/token") return await handleToken(req, res);
     if (p === "/mcp") return await handleMcp(req, res);
+    if (url.pathname === "/stock" || url.pathname.startsWith("/stock/")) return await handleStock(req, res, url);
     send(res, 404, "Niet gevonden");
   } catch (e) {
     log("http-fout", req.method, p, e && e.stack ? e.stack : e);

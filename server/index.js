@@ -8,7 +8,7 @@ const os = require("os");
 const path = require("path");
 
 const SERVER_NAME = "bbt-dms";
-const SERVER_VERSION = "0.3.1";
+const SERVER_VERSION = "0.4.0";
 const TEST_API_KEY = "481384f3ba7c0a75b3340b473d5e6ade"; // publieke testsleutel uit de BBT-documentatie
 const BASE_URL = (process.env.BBT_BASE_URL || "https://bbt-cloud.be/service/api/v1").replace(/\/+$/, "");
 const API_KEY = (process.env.BBT_API_KEY || "").trim();
@@ -473,7 +473,7 @@ async function handle(msg) {
   }
 }
 
-module.exports = { handle, SERVER_NAME, SERVER_VERSION, API_KEY, EXPORT_DIR, log };
+module.exports = { handle, SERVER_NAME, SERVER_VERSION, API_KEY, EXPORT_DIR, log, bbtPost };
 
 // ---------------------------------------------------------------- stdio (lokaal)
 if (require.main === module) {
