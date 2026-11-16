@@ -282,7 +282,7 @@
         <div class="detail-side">
           <div class="panel"><div class="d-price${c.prijs ? "" : " ask"}">${prijsTxt(c)}</div>
             <div class="actions">
-              <button class="btn yellow" data-lead>Lead aanmaken</button>
+              <!-- Knop "Lead aanmaken" voorlopig uitgeschakeld (wordt later gekoppeld aan het CRM). -->
               ${c.carpass ? `<a class="btn ghost" href="${esc(c.carpass)}" target="_blank" rel="noopener noreferrer">Car-Pass bekijken</a>` : ""}
               <button class="btn ghost" data-fav="${esc(c.id)}">${S.favs.has(c.id) ? "Uit favorieten" : "Bij favorieten (vergelijken)"}</button>
             </div></div>
@@ -296,7 +296,7 @@
     inp.value = prevQ != null ? prevQ : S.q;
     renderOptions(c, el, inp.value);
     inp.oninput = () => renderOptions(c, el, inp.value);
-    $("[data-lead]", el).onclick = () => openLeadForm(c);
+    // (lead-knop uitgeschakeld; openLeadForm blijft bestaan voor later)
   }
 
   function openLightbox(c, start) {
