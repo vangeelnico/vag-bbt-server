@@ -137,13 +137,13 @@
     if (c.direct_beschikbaar) b += '<span class="badge green">Direct beschikbaar</span>';
     if (c.gereserveerd) b += '<span class="badge res">Gereserveerd</span>';
     const i = S.dealer && S.intern && S.intern[c.id];
-    if (i && i.schade && inCard) b += '<span class="badge dmg">Schade niet hersteld</span>';
+    if (i && inCard) for (const s of i.schade) b += `<span class="badge dmg">${esc(s)}</span>`;
     return b;
   }
   function dealerLine(c) {
     const i = S.dealer && S.intern && S.intern[c.id];
     if (!i) return "";
-    return `<div class="dealerline"><span>${esc(i.locatie)}</span>${i.reservatie ? `<span>Res.: ${esc(i.reservatie)}</span>` : ""}</div>`;
+    return `<div class="dealerline"><span>${esc(i.locatie)}</span>${i.statussen.map((s) => `<span>${esc(s)}</span>`).join("")}${i.reservatie ? `<span>Res.: ${esc(i.reservatie)}</span>` : ""}</div>`;
   }
   function renderGrid() {
     const list = visible(); const t = terms();
@@ -237,9 +237,9 @@
     const rows = [
       ["Locatie", i.locatie], ["Aankoopprijs", eur2(i.aankoopprijs)],
       ["Netto marge", `<span class="${i.marge >= 0 ? "pos" : "neg"}">${esc(eur2(i.marge))}</span>`, true],
-      ["Nieuwprijs", i.nieuwprijs ? eur(i.nieuwprijs) : ""], ["Schade", i.schade ? "Niet hersteld (status 77)" : "Geen open schade"],
+      ["Nieuwprijs", i.nieuwprijs ? eur(i.nieuwprijs) : ""], ["Schade", i.schade.length ? i.schade.join(", ") : "Geen open schade"],
       ["Schadebedrag", i.schadebedrag ? eur2(i.schadebedrag) : ""], ["Leverancier", i.leverancier],
-      ["Status", i.status], ["Reservatie", i.reservatie], ["VIN", i.vin], ["Nummerplaat", i.nummerplaat], ["Aankoopdatum", i.aankoopdatum],
+      ["Status", i.statussen.join(", ")], ["Reservatie", i.reservatie], ["VIN", i.vin], ["Nummerplaat", i.nummerplaat], ["Aankoopdatum", i.aankoopdatum],
     ].filter((x) => x[1]);
     return `<div class="panel intern"><h3>Intern (dealermodus)</h3><dl class="specs">${rows.map(([k, v, raw]) => `<div><dt>${k}</dt><dd>${raw ? v : esc(v)}</dd></div>`).join("")}</dl>
       ${i.schade_details ? `<p class="note"><b>Schadedetails:</b> ${esc(i.schade_details)}</p>` : ""}
@@ -376,7 +376,7 @@
         ${row("Interieur", (c) => esc(c.interieur))}
         ${row("Carrosserie", (c) => esc(c.carrosserie))}
         ${row("Opties", (c) => c.opties.length + " opties")}
-        ${intern ? row("Intern", (c) => { const i = S.intern[c.id]; return i ? `${esc(i.locatie)}${i.schade ? "<br><b>Schade niet hersteld</b>" : ""}${i.reservatie ? "<br>Res.: " + esc(i.reservatie) : ""}` : ""; }, "intern-row") : ""}
+        ${intern ? row("Intern", (c) => { const i = S.intern[c.id]; return i ? `${esc(i.locatie)}${i.schade.length ? "<br><b>" + esc(i.schade.join(", ")) + "</b>" : ""}${i.reservatie ? "<br>Res.: " + esc(i.reservatie) : ""}` : ""; }, "intern-row") : ""}
         ${cars.length > 1 && diff.length ? `<tr class="sect"><td colspan="${cars.length + 1}">Verschillen in opties (${diff.length})</td></tr>` + diff.map((o) => `<tr><td class="optname">${esc(o)}</td>${cars.map((c) => c.opties.includes(o) ? '<td class="yes">✓</td>' : '<td class="no">–</td>').join("")}</tr>`).join("") : ""}
       </tbody></table></div></div>`;
     if (el.hidden) openOverlay(el);

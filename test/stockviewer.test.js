@@ -114,9 +114,13 @@ const H = { "X-Stockviewer": "1", "Content-Type": "application/json" };
     const i = d.intern[String(c.id)];
     assert.equal(i.marge, parseFloat(c.net_margin));
     const s77 = raw.find((x) => pub.has(String(x.id)) && /;77;/.test(x.status || ""));
-    if (s77) assert.equal(d.intern[String(s77.id)].schade, true, "status 77 moet schade = niet hersteld geven");
+    if (s77) assert.ok(d.intern[String(s77.id)].schade.includes("Schade niet hersteld"), "status 77 moet schade geven");
     const zonder = raw.find((x) => pub.has(String(x.id)) && !/;77;/.test(x.status || "") && Number(x.damage));
-    if (zonder) assert.equal(d.intern[String(zonder.id)].schade, false, "veld damage mag niet meer tellen");
+    if (zonder) assert.equal(d.intern[String(zonder.id)].schade.length, 0, "veld damage mag niet meer tellen");
+    const s184 = raw.find((x) => pub.has(String(x.id)) && /;184;/.test(x.status || ""));
+    if (s184) assert.ok(d.intern[String(s184.id)].schade.includes("Hagelschade"), "184 = hagelschade");
+    const s454 = raw.find((x) => pub.has(String(x.id)) && /;454;/.test(x.status || ""));
+    if (s454) assert.ok(d.intern[String(s454.id)].statussen.includes("Geadverteerd op AutoScout24"));
     if (locCfg.locaties[String(c.location)]) assert.equal(i.locatie, locCfg.locaties[String(c.location)]);
   });
 
