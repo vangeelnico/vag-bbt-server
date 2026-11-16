@@ -34,7 +34,7 @@
   "selling_price": "0.00",
   "new_price": "0.00",
   "location": 1,
-  "damage": 1,
+  "damage": 0,
   "damage_details": "Kras&nbsp;GEHEIMSCHADE links<br />",
   "anticipated_damage_amount": "777.77",
   "purchase_price": "31234.56",
@@ -42,7 +42,7 @@
   "supplier": 8,
   "memo": "GEHEIMMEMO interne",
   "other": "GEHEIMNOTITIE overname 38500",
-  "status": ";454;",
+  "status": ";197;77;",
   "reservation": "",
   "archived": 0,
   "invoiced": 0,
@@ -101,7 +101,8 @@
     "medium": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/medium/autoscout%202%20%2886555%29.jpeg",
     "large": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/large/autoscout%202%20%2886555%29.jpeg"
    }
-  ]
+  ],
+  "ordered": 0
  },
  {
   "id": 9002,
@@ -204,7 +205,8 @@
     "medium": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/medium/autoscout%202%20%2886555%29.jpeg",
     "large": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/large/autoscout%202%20%2886555%29.jpeg"
    }
-  ]
+  ],
+  "ordered": 0
  },
  {
   "id": 9003,
@@ -308,7 +310,8 @@
     "medium": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/medium/autoscout%202%20%2886555%29.jpeg",
     "large": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/large/autoscout%202%20%2886555%29.jpeg"
    }
-  ]
+  ],
+  "ordered": 0
  },
  {
   "id": 9004,
@@ -411,6 +414,111 @@
     "medium": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/medium/autoscout%202%20%2886555%29.jpeg",
     "large": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/large/autoscout%202%20%2886555%29.jpeg"
    }
-  ]
+  ],
+  "ordered": 0
+ },
+ {
+  "id": 9005,
+  "reference": "TESTREF0005",
+  "chassis_number": "WTESTVIN000000005",
+  "license_plate": "",
+  "brand": "Mercedes-Benz",
+  "model": "Vito 116 cdi",
+  "model_execution": "L3 - EXTRA LANG - ELEK. SCHUIFDEUREN - LICHTE VRACHT 6PL. MOGELIJK",
+  "buildyear": "2025",
+  "first_subscription": "2025-05-07",
+  "km": 43439,
+  "color": "Obsidiaanzwart met. ",
+  "interior": "Stof zwart ",
+  "fuel_label": {
+   "NL": "Diesel",
+   "FR": "Diesel",
+   "EN": "Diesel",
+   "DE": "Diesel"
+  },
+  "transmission_label": {
+   "NL": "Automaat",
+   "FR": "Automatique",
+   "EN": "Automatic",
+   "DE": "Automat"
+  },
+  "kw": "120",
+  "horsepower": "163",
+  "co2_wltp": "193",
+  "euronorm_label": "Euro 6d",
+  "website_group_label": "V - T - Vito",
+  "car_pass": "",
+  "desired_selling_price": "0.00",
+  "selling_price": "0.00",
+  "new_price": "0.00",
+  "location": 1,
+  "damage": 0,
+  "damage_details": "",
+  "anticipated_damage_amount": "0.00",
+  "purchase_price": "22222.22",
+  "net_margin": -123.45,
+  "supplier": 9,
+  "memo": "",
+  "other": "",
+  "status": ";;",
+  "reservation": "",
+  "archived": 0,
+  "invoiced": 0,
+  "sold_by": 0,
+  "doors": "5",
+  "gears": "9",
+  "cylinders_capacity": "1950",
+  "warranty": 6,
+  "purchase_date": "2026-11-03",
+  "date_created": "2026-11-03 06:46:17",
+  "options_label": [
+   "Update voor Comand",
+   "Modeljaar 2025",
+   "Obsidiaanzwart met.",
+   "Elektrische parkeerrem",
+   "Actieve remassistent",
+   "HOLD-functie",
+   "Multifunctioneel stuur",
+   "Comfortophanging",
+   "Verstelbare stuurkolom",
+   "Aerodynamica pakket",
+   "Hill start assist",
+   "Digitale radio (DAB)",
+   "Navigatie",
+   "Smartphone integratiepakket",
+   "MBUX mulitmediasysteem",
+   "Vliesbatterij 12V/95Ah",
+   "2-wegs luidsprekers voor en achter",
+   "Voorbereiding voor remote services plus",
+   "Live traffic information",
+   "Mercedes-Benz noodoproepsysteem",
+   "Ongeval en panne management",
+   "Verwarmde ruitensproeiers",
+   "Elektrisch inklapbare buitenspiegels",
+   "Handschoenvak afsluitbaar",
+   "Elektrische en verwarmde buitenspiegels",
+   "Elektrisch wegklapbare trekhaak"
+  ],
+  "pictures": [
+   {
+    "original": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/Coming%20soon%20%2886554%29.jpg",
+    "thumbnail": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/thumbnail/Coming%20soon%20%2886554%29.jpg",
+    "medium": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/medium/Coming%20soon%20%2886554%29.jpg",
+    "large": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/large/Coming%20soon%20%2886554%29.jpg"
+   },
+   {
+    "original": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/autoscout%204%20%2886556%29.png",
+    "thumbnail": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/thumbnail/autoscout%204%20%2886556%29.png",
+    "medium": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/medium/autoscout%204%20%2886556%29.png",
+    "large": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/large/autoscout%204%20%2886556%29.png"
+   },
+   {
+    "original": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/autoscout%202%20%2886555%29.jpeg",
+    "thumbnail": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/thumbnail/autoscout%202%20%2886555%29.jpeg",
+    "medium": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/medium/autoscout%202%20%2886555%29.jpeg",
+    "large": "https://bbt-storage.b-cdn.net/pictures/e8b03e73b073a5eea5adc4cbcf1e5588/large/autoscout%202%20%2886555%29.jpeg"
+   }
+  ],
+  "ordered": 1
  }
 ]

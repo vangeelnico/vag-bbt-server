@@ -222,3 +222,5 @@ body.dealer .intern { display: block; }
 }
 .muted { color: var(--muted); }
 .cmp td.optname { text-transform: none; font-size: 14px; color: var(--ink); font-weight: 400; letter-spacing: 0; }
+.card .ref { font-size: 13px; color: var(--muted); letter-spacing: .02em; }
+.d-ref { margin: -4px 0 8px; color: var(--muted); font-size: 15px; }

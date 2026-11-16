@@ -55,7 +55,7 @@
     const btn = $("#btn-refresh"); btn.classList.add("spin");
     try {
       const d = await api("cars" + (refresh ? "?refresh=1" : ""));
-      S.cars = d.wagens.map((c) => ({ ...c, prijsband: band(PRIJS, c.prijs), kmband: band(KM, c.km), _txt: norm([c.merk, c.model, c.uitvoering, ...c.opties].join(" | ")) }));
+      S.cars = d.wagens.map((c) => ({ ...c, prijsband: band(PRIJS, c.prijs), kmband: band(KM, c.km), _txt: norm([c.referentie, c.merk, c.model, c.uitvoering, ...c.opties].join(" | ")) }));
       S.byId = new Map(S.cars.map((c) => [c.id, c]));
       S.bijgewerkt = d.bijgewerkt;
       for (const id of [...S.favs]) if (!S.byId.has(id)) S.favs.delete(id);
@@ -137,13 +137,13 @@
     if (c.direct_beschikbaar) b += '<span class="badge green">Direct beschikbaar</span>';
     if (c.gereserveerd) b += '<span class="badge res">Gereserveerd</span>';
     const i = S.dealer && S.intern && S.intern[c.id];
-    if (i && i.schade && inCard) b += '<span class="badge dmg">Schade</span>';
+    if (i && i.schade && inCard) b += '<span class="badge dmg">Schade niet hersteld</span>';
     return b;
   }
   function dealerLine(c) {
     const i = S.dealer && S.intern && S.intern[c.id];
     if (!i) return "";
-    return `<div class="dealerline"><span>Ref ${esc(i.referentie)}</span><span>${esc(i.locatie)}</span><span>Marge <b class="${i.marge >= 0 ? "pos" : "neg"}">${eur(i.marge)}</b></span>${i.reservatie ? `<span>Res.: ${esc(i.reservatie)}</span>` : ""}</div>`;
+    return `<div class="dealerline"><span>${esc(i.locatie)}</span>${i.reservatie ? `<span>Res.: ${esc(i.reservatie)}</span>` : ""}</div>`;
   }
   function renderGrid() {
     const list = visible(); const t = terms();
@@ -159,6 +159,7 @@
         <div class="body">
           <h3>${esc(c.model)}</h3>
           <div class="exec">${esc(c.uitvoering)}</div>
+          <div class="ref">Ref. ${esc(c.referentie)}</div>
           <div class="meta"><span>${esc(c.bouwjaar)}</span><span>${kmf(c.km)}</span><span>${esc(c.brandstof)}</span></div>
           ${hits.length ? `<div class="hits">${hits.map((h) => `<span class="hit">✓ ${esc(h)}</span>`).join("")}</div>` : ""}
           <div class="price${c.prijs ? "" : " ask"}">${prijsTxt(c)}</div>
@@ -234,9 +235,9 @@
     const i = S.dealer && S.intern && S.intern[c.id];
     if (!i) return "";
     const rows = [
-      ["Referentie", i.referentie], ["Locatie", i.locatie], ["Aankoopprijs", eur2(i.aankoopprijs)],
+      ["Locatie", i.locatie], ["Aankoopprijs", eur2(i.aankoopprijs)],
       ["Netto marge", `<span class="${i.marge >= 0 ? "pos" : "neg"}">${esc(eur2(i.marge))}</span>`, true],
-      ["Nieuwprijs", i.nieuwprijs ? eur(i.nieuwprijs) : ""], ["Schade", i.schade ? "Ja" : "Nee"],
+      ["Nieuwprijs", i.nieuwprijs ? eur(i.nieuwprijs) : ""], ["Schade", i.schade ? "Niet hersteld (status 77)" : "Geen open schade"],
       ["Schadebedrag", i.schadebedrag ? eur2(i.schadebedrag) : ""], ["Leverancier", i.leverancier],
       ["Status", i.status], ["Reservatie", i.reservatie], ["VIN", i.vin], ["Nummerplaat", i.nummerplaat], ["Aankoopdatum", i.aankoopdatum],
     ].filter((x) => x[1]);
@@ -271,7 +272,7 @@
         <button class="fav${S.favs.has(c.id) ? " on" : ""}" data-fav="${esc(c.id)}" aria-label="Favoriet">${ICON.star}</button><button class="icon-btn mode-btn" data-mode aria-label="Wissel klant/dealer">${ICON.mode}</button></div>
       <div class="ov-body"><div class="detail-grid">
         <div>${gallery(c)}
-          <h1 class="d-title">${esc(c.model)}</h1><p class="d-exec">${esc(c.uitvoering)}</p>
+          <h1 class="d-title">${esc(c.model)}</h1><p class="d-exec">${esc(c.uitvoering)}</p><p class="d-ref">Referentie ${esc(c.referentie)}</p>
           <div class="d-badges">${badgeHtml(c, false)}</div>
           <div class="panel"><h3>Specificaties</h3><dl class="specs">${specRows(c)}</dl></div>
           <div class="panel"><h3>Opties</h3>
@@ -362,6 +363,7 @@
       <div class="ov-body"><div class="cmp-wrap"><table class="cmp"><tbody>
         ${row("", (c) => `${c.fotos[0] ? `<img src="${esc(c.fotos[0].m)}" alt="">` : ""}<button class="link-btn rm" data-fav="${esc(c.id)}">Verwijderen</button>`)}
         ${row("Model", (c) => `<b>${esc(c.model)}</b><br><span class="muted">${esc(c.uitvoering)}</span>`)}
+        ${row("Referentie", (c) => esc(c.referentie))}
         ${row("Prijs", (c) => `<span class="p">${prijsTxt(c)}</span>`)}
         ${row("Beschikbaar", (c) => [c.direct_beschikbaar ? '<span class="badge green">Direct beschikbaar</span>' : "", c.gereserveerd ? '<span class="badge res">Gereserveerd</span>' : ""].join(" ") || "–")}
         ${row("Bouwjaar", (c) => esc(c.bouwjaar) + (c.inschrijving ? ` (${maand(c.inschrijving)})` : ""))}
@@ -374,7 +376,7 @@
         ${row("Interieur", (c) => esc(c.interieur))}
         ${row("Carrosserie", (c) => esc(c.carrosserie))}
         ${row("Opties", (c) => c.opties.length + " opties")}
-        ${intern ? row("Intern", (c) => { const i = S.intern[c.id]; return i ? `Ref ${esc(i.referentie)}<br>${esc(i.locatie)}<br>Marge <b class="${i.marge >= 0 ? "pos" : "neg"}">${eur(i.marge)}</b>${i.schade ? "<br>Schade" : ""}` : ""; }, "intern-row") : ""}
+        ${intern ? row("Intern", (c) => { const i = S.intern[c.id]; return i ? `${esc(i.locatie)}${i.schade ? "<br><b>Schade niet hersteld</b>" : ""}${i.reservatie ? "<br>Res.: " + esc(i.reservatie) : ""}` : ""; }, "intern-row") : ""}
         ${cars.length > 1 && diff.length ? `<tr class="sect"><td colspan="${cars.length + 1}">Verschillen in opties (${diff.length})</td></tr>` + diff.map((o) => `<tr><td class="optname">${esc(o)}</td>${cars.map((c) => c.opties.includes(o) ? '<td class="yes">✓</td>' : '<td class="no">–</td>').join("")}</tr>`).join("") : ""}
       </tbody></table></div></div>`;
     if (el.hidden) openOverlay(el);
