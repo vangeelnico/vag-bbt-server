@@ -1,0 +1,11 @@
+{
+  "_uitleg": "BBT-statuscodes -> omschrijving (enkel zichtbaar in dealermodus). 'schade' = codes die als openstaande schade tellen (badge op de kaart). Eigen versie kan in C:\\vag-bbt\\data\\stock-statussen.json (heeft voorrang).",
+  "schade": ["77", "184", "99"],
+  "statussen": {
+    "77": "Schade niet hersteld",
+    "99": "Spot repair / velg herstellen",
+    "184": "Hagelschade",
+    "197": "Foto's nog te trekken",
+    "454": "Geadverteerd op AutoScout24"
+  }
+}

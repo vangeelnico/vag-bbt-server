@@ -5,7 +5,7 @@
 //   /stock/api/cars   → KLANTVELDEN (whitelist). Nooit aankoopprijs, marge, schade, locatie, leverancier,
 //                        memo, interne statussen, reservatienaam of VIN. (Referentie mag wel: altijd zichtbaar.)
 // Verkochte wagens (bestelbon: BBT-veld "ordered" = 1), gearchiveerde en gefactureerde wagens worden weggelaten.
-// Schade: het BBT-veld damage wordt niet gebruikt; status 77 = schade nog niet hersteld.
+// Schade: het BBT-veld damage wordt niet gebruikt; schade = statuscodes uit stock-statussen.json (77, 184, 99).
 //   /stock/api/intern → interne velden; de app haalt die pas op bij het wisselen naar dealermodus.
 "use strict";
 
@@ -77,7 +77,6 @@ const KLEUREN = [
   ["Rood", /rood|rot\b|red|rouge|hyacint/], ["Groen", /groen|gr(ü|u)n|green|vert/],
   ["Bruin/beige", /bruin|braun|brown|beige|zand|kashmir|cashmere/],
 ];
-const SCHADE_STATUS = "77"; // BBT-status: schade nog niet hersteld
 const statusCodes = (c) => String(c.status || "").split(";").map((s) => s.trim()).filter(Boolean);
 function kleurGroep(c) { const s = c.toLowerCase(); for (const [n, re] of KLEUREN) if (re.test(s)) return n; return c ? "Andere" : ""; }
 function modelGroep(model) {
@@ -99,6 +98,12 @@ module.exports = function createStockviewer({ bbtPost, log, DATA_DIR }) {
   const enabled = PASSWORD.length >= 8;
   if (!PASSWORD) log("STOCKVIEWER: STOCK_PASSWORD ontbreekt in .env – /stock is uitgeschakeld.");
 
+  function statussen() {
+    const def = readJson(path.join(__dirname, "stock-statussen.json"), {});
+    const local = readJson(path.join(DATA_DIR, "stock-statussen.json"), null);
+    const cfg = local && typeof local === "object" ? { ...def, ...local } : def;
+    return { namen: cfg.statussen || {}, schade: new Set((cfg.schade || ["77"]).map(String)) };
+  }
   function locaties() {
     const def = readJson(path.join(__dirname, "stock-locaties.json"), {});
     const local = readJson(LOC_FILE_LOCAL, null);
@@ -167,15 +172,18 @@ module.exports = function createStockviewer({ bbtPost, log, DATA_DIR }) {
       gereserveerd: !!str(c.reservation),
     };
   }
-  function toIntern(c, loc) {
+  function toIntern(c, loc, st) {
+    const codes = statusCodes(c);
     const lid = String(c.location ?? "");
     return {
       vin: str(c.chassis_number), nummerplaat: str(c.license_plate),
       locatie: loc.namen[lid] || (lid && lid !== "0" ? "Locatie #" + lid : "–"), locatie_id: lid,
       aankoopprijs: num(c.purchase_price), marge: num(c.net_margin), nieuwprijs: num(c.new_price),
-      schade: statusCodes(c).includes(SCHADE_STATUS), schade_details: plain(c.damage_details), schadebedrag: num(c.anticipated_damage_amount),
+      schade: codes.filter((s) => st.schade.has(s)).map((s) => st.namen[s] || "Schade (status " + s + ")"),
+      statussen: codes.filter((s) => !st.schade.has(s)).map((s) => st.namen[s] || "Status " + s),
+      schade_details: plain(c.damage_details), schadebedrag: num(c.anticipated_damage_amount),
       leverancier: c.supplier ? "#" + c.supplier : "", memo: plain(c.memo), notitie: plain(c.other),
-      status: statusCodes(c).join(", "), reservatie: plain(c.reservation),
+      reservatie: plain(c.reservation),
       aankoopdatum: date(c.purchase_date),
     };
   }
@@ -241,7 +249,7 @@ module.exports = function createStockviewer({ bbtPost, log, DATA_DIR }) {
     }
     if (route === "intern" && req.method === "GET") {
       const c = await getCars(force); const loc = locaties();
-      const out = {}; for (const x of c.raw) out[String(x.id)] = toIntern(x, loc);
+      const st = statussen(); const out = {}; for (const x of c.raw) out[String(x.id)] = toIntern(x, loc, st);
       return json(res, 200, { bijgewerkt: new Date(c.at).toISOString(), intern: out });
     }
     if (route === "leads" && req.method === "GET") return json(res, 200, { leads: leads().slice().reverse() });
