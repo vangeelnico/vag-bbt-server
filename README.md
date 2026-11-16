@@ -11,6 +11,8 @@ Twee manieren om te draaien:
 - `server/index.js` – alle BBT-functies (planning, facturen, orders, klanten, stock, ...)
 - `server/stockwagen.js` – stockwagen controleren + aanmaken (met bevestigingscode)
 - `server/http.js` – webversie met login
+- `server/stockviewer.js` + `public/stock/` – Stockviewer-web-app (`/stock/`), zie hieronder
+- `test/stockviewer.test.js` – lektest Stockviewer (`node test/stockviewer.test.js`)
 - `windows/` – installatie- en updatescripts voor de Windows-pc
 - `manifest.json` – voor de Claude Desktop-extensie
 
@@ -92,6 +94,27 @@ Na een wijziging op GitHub, op de Windows-pc (als administrator):
 cd C:\vag-bbt\vag-bbt-server
 powershell -ExecutionPolicy Bypass -File .\windows\update-windows.ps1
 ```
+
+## Stockviewer (iPad/iPhone)
+Web-app om de stock samen met klanten te bekijken: `https://xxx.ngrok-free.app/stock/`
+
+**Eenmalig instellen**: zet in `C:\vag-bbt\.env` een regel `STOCK_PASSWORD=...` (min. 8 tekens,
+iets anders dan `ADMIN_PASSWORD`) en herstart de server. Zonder die regel staat /stock uit.
+
+**Op de iPad zetten**: Safari > adres openen > (eenmalig ngrok-waarschuwing "Visit Site") >
+Deel-knop > **Zet op beginscherm**. Open de app via het nieuwe icoon en log één keer in
+(blijft 30 dagen ingelogd). Hetzelfde op de iPhone.
+
+**Gebruik**
+- Opent altijd in **klantmodus**. Oog-icoon rechtsboven = wisselen naar **dealermodus**
+  (oranje gestreepte balk "INTERN"). Dealermodus valt vanzelf terug naar klantmodus na 5 min
+  zonder aanraking of als de app naar de achtergrond gaat.
+- Klantmodus haalt de interne gegevens niet eens op: die komen pas bij de tik op het oog
+  (apart endpoint `/stock/api/intern`) en worden bij terugkeer uit het geheugen gewist.
+- Stockdata 10 min in cache; vernieuw-knop haalt meteen nieuwe data uit BBT. Alleen-lezen.
+- Leads worden bewaard in `C:\vag-bbt\data\stock-leads.json` (niet in BBT, niet op GitHub).
+- Locatienamen en welke locatie "Direct beschikbaar" geeft: `server/stock-locaties.json`.
+  Eigen versie mag in `C:\vag-bbt\data\stock-locaties.json` (heeft voorrang, overleeft updates).
 
 ## Problemen
 - Logbestand: `C:\vag-bbt\logs\server.log`
