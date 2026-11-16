@@ -20,10 +20,13 @@ $basic = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("x-access-tok
 $gitArgs = @("-c", "safe.directory=$($Repo -replace '\\','/')", "-c", "http.extraHeader=Authorization: Basic $basic", "-C", $Repo)
 
 # (Windows PowerShell 5.1 ziet tekst op stderr van git/node als fout; daarom lokaal "Continue" en zelf de exitcode controleren.)
-function Git {
+# Let op: de functie mag NIET "Git" heten en moet git.exe aanroepen. PowerShell is hoofdletterongevoelig en
+# verkiest functies boven programma's: een functie "Git" die "git" aanroept, roept zichzelf eindeloos aan
+# ("call depth overflow").
+function Invoke-Git {
   param([Parameter(ValueFromRemainingArguments)]$a)
   $ErrorActionPreference = "Continue"
-  $out = & git @gitArgs @a 2>&1 | ForEach-Object { "$_" }
+  $out = & git.exe @gitArgs @a 2>&1 | ForEach-Object { "$_" }
   if ($LASTEXITCODE -ne 0) { throw "git $($a[0]) mislukt: $($out -join ' ')" }
   return ($out -join "`n")
 }
@@ -47,13 +50,13 @@ function Test-Server {
 }
 
 try {
-  Git fetch --quiet origin $Branch | Out-Null
-  $old = (Git rev-parse HEAD).Trim()
-  $new = (Git rev-parse "origin/$Branch").Trim()
+  Invoke-Git fetch --quiet origin $Branch | Out-Null
+  $old = (Invoke-Git rev-parse HEAD).Trim()
+  $new = (Invoke-Git rev-parse "origin/$Branch").Trim()
   if ($old -eq $new) { exit 0 }   # niets nieuw: stil stoppen
 
   Log "Nieuwe versie gevonden: $($old.Substring(0,7)) -> $($new.Substring(0,7))"
-  Git reset --hard --quiet $new | Out-Null
+  Invoke-Git reset --hard --quiet $new | Out-Null
 
   # Syntaxcontrole voor we herstarten
   foreach ($f in Get-ChildItem (Join-Path $Repo "server") -Filter *.js) {
@@ -72,7 +75,7 @@ catch {
   Log "FOUT: $($_.Exception.Message)"
   if ($old -and $new -and $old -ne $new) {
     try {
-      Git reset --hard --quiet $old | Out-Null
+      Invoke-Git reset --hard --quiet $old | Out-Null
       Restart-Server
       $ok = Test-Server
       Log ("Teruggezet naar {0}: {1}" -f $old.Substring(0,7), $(if ($ok) { $ok } else { "SERVER REAGEERT NIET" }))
